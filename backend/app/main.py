@@ -1,45 +1,67 @@
-"""
-RAVAND OS — FastAPI application entry point.
-
-Run with:
-    uvicorn app.main:app --reload
-"""
+from pathlib import Path
 
 from fastapi import FastAPI
 
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
-from app.core.logging import get_logger, setup_logging
-from app.database.database import Base, engine
 
-# ── Logging ──────────────────────────────────────────────────────────────────
-setup_logging()
-logger = get_logger(__name__)
 
-# ── Database ──────────────────────────────────────────────────────────────────
-# Creates all tables on startup (MVP approach; replace with Alembic for prod).
-Base.metadata.create_all(bind=engine)
+# -------------------------
+# Paths
+# -------------------------
+BASE_DIR = Path(__file__).resolve().parent.parent
+COMPANY_FILE = BASE_DIR / "knowledge" / "company.md"
 
-# ── App ───────────────────────────────────────────────────────────────────────
+
+# -------------------------
+# Safe settings access
+# (جلوگیری از کرش اگر env ناقص بود)
+# -------------------------
+APP_NAME = getattr(settings, "APP_NAME", "Ravand OS")
+APP_VERSION = getattr(settings, "APP_VERSION", "0.1.0")
+
+
+# -------------------------
+# FastAPI app
+# -------------------------
 app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.APP_VERSION,
+    title=APP_NAME,
+    version=APP_VERSION,
     description="AI-powered Business Operating System — MVP backend",
 )
 
-# ── Routers ───────────────────────────────────────────────────────────────────
-app.include_router(api_v1_router)
+
+# -------------------------
+# Routers
+# -------------------------
+app.include_router(api_v1_router, prefix="/api/v1")
 
 
-# ── Root ──────────────────────────────────────────────────────────────────────
-@app.get("/", tags=["Health"])
+# -------------------------
+# Root endpoints
+# -------------------------
+@app.get("/")
 def root():
-    """Health check — confirms the API is running."""
     return {
-        "app": settings.APP_NAME,
-        "version": settings.APP_VERSION,
-        "status": "running",
+        "project": "RAVAND OS",
+        "status": "running"
     }
 
 
-logger.info(f"{settings.APP_NAME} v{settings.APP_VERSION} started")
+@app.get("/health")
+def health():
+    return {
+        "status": "ok"
+    }
+
+
+@app.get("/company")
+def company():
+    if COMPANY_FILE.exists():
+        return {
+            "content": COMPANY_FILE.read_text(encoding="utf-8")
+        }
+
+    return {
+        "error": "company.md not found"
+    }
