@@ -1,11 +1,14 @@
 from fastapi import FastAPI
 
-from app.api.root import router as root_router
-from app.core.config import settings
-
 app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.VERSION,
+    title="RAVAND OS",
+    version="0.1.0"
 )
 
-app.include_router(root_router)
+@app.get("/")
+def root():
+    return {
+        "project": "RAVAND OS",
+        "status": "running",
+        "message": "Welcome Javad 🚀"
+    }
