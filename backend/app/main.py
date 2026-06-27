@@ -7,46 +7,58 @@ from app.core.config import settings
 
 
 # -------------------------
-# Paths
+# Project paths
 # -------------------------
-BASE_DIR = Path(__file__).resolve().parent.parent
-COMPANY_FILE = BASE_DIR / "knowledge" / "company.md"
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+KNOWLEDGE_DIR = PROJECT_ROOT / "knowledge"
+
+COMPANY_FILE = KNOWLEDGE_DIR / "company.md"
 
 
 # -------------------------
-# Safe settings access
-# (جلوگیری از کرش اگر env ناقص بود)
+# Safe settings
 # -------------------------
+
 APP_NAME = getattr(settings, "APP_NAME", "Ravand OS")
 APP_VERSION = getattr(settings, "APP_VERSION", "0.1.0")
 
 
 # -------------------------
-# FastAPI app
+# FastAPI
 # -------------------------
+
 app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION,
-    description="AI-powered Business Operating System — MVP backend",
+    description="AI-powered Business Operating System - MVP Backend",
 )
 
 
 # -------------------------
 # Routers
 # -------------------------
+
 app.include_router(api_v1_router, prefix="/api/v1")
 
 
 # -------------------------
-# Root endpoints
+# Root
 # -------------------------
+
 @app.get("/")
 def root():
     return {
-        "project": "RAVAND OS",
-        "status": "running"
+        "project": APP_NAME,
+        "version": APP_VERSION,
+        "status": "running",
     }
 
+
+# -------------------------
+# Health
+# -------------------------
 
 @app.get("/health")
 def health():
@@ -55,13 +67,16 @@ def health():
     }
 
 
+# -------------------------
+# Company
+# -------------------------
+
 @app.get("/company")
 def company():
-    if COMPANY_FILE.exists():
-        return {
-            "content": COMPANY_FILE.read_text(encoding="utf-8")
-        }
-
     return {
-        "error": "company.md not found"
+        "project_root": str(PROJECT_ROOT),
+        "knowledge_dir": str(KNOWLEDGE_DIR),
+        "company_file": str(COMPANY_FILE),
+        "exists": COMPANY_FILE.exists(),
+        "content": COMPANY_FILE.read_text(encoding="utf-8") if COMPANY_FILE.exists() else None,
     }
