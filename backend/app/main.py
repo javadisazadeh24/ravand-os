@@ -1,82 +1,60 @@
-from pathlib import Path
+"""
+RAVAND OS — Main Application Entry Point
+Run with: python -m uvicorn app.main:app --reload
+"""
 
 from fastapi import FastAPI
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import router as api_v1_router
-from app.core.config import settings
+from app.models.request_models import HealthResponse
+from app.core.settings import settings
 
 
-# -------------------------
-# Project paths
-# -------------------------
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
-KNOWLEDGE_DIR = PROJECT_ROOT / "knowledge"
-
-COMPANY_FILE = KNOWLEDGE_DIR / "company.md"
-
-
-# -------------------------
-# Safe settings
-# -------------------------
-
-APP_NAME = getattr(settings, "APP_NAME", "Ravand OS")
-APP_VERSION = getattr(settings, "APP_VERSION", "0.1.0")
-
-
-# -------------------------
-# FastAPI
-# -------------------------
+# ── App Init ───────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title=APP_NAME,
-    version=APP_VERSION,
-    description="AI-powered Business Operating System - MVP Backend",
+    title="RAVAND OS",
+    description="AI-powered Business Operating System for TPE Co. | توسعه پردازان",
+    version=settings.APP_VERSION,
+    docs_url="/docs",        # Swagger UI
+    redoc_url="/redoc"       # ReDoc
 )
 
 
-# -------------------------
-# Routers
-# -------------------------
+# ── CORS Middleware ────────────────────────────────────────────────────────
+# اجازه می‌دیم از همه جا (frontend، curl، Postman) بشه call کرد
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ── Routes ─────────────────────────────────────────────────────────────────
 
 app.include_router(api_v1_router, prefix="/api/v1")
 
 
-# -------------------------
-# Root
-# -------------------------
+# ── Health Check ───────────────────────────────────────────────────────────
 
-@app.get("/")
-def root():
+@app.get("/health", response_model=HealthResponse, tags=["System"])
+async def health_check():
+    """سرور در حال اجراست یا نه؟"""
+    return HealthResponse(
+        status="ok",
+        version=settings.APP_VERSION,
+        app=settings.APP_NAME
+    )
+
+
+@app.get("/", tags=["System"])
+async def root():
+    """Root endpoint"""
     return {
-        "project": APP_NAME,
-        "version": APP_VERSION,
-        "status": "running",
-    }
-
-
-# -------------------------
-# Health
-# -------------------------
-
-@app.get("/health")
-def health():
-    return {
-        "status": "ok"
-    }
-
-
-# -------------------------
-# Company
-# -------------------------
-
-@app.get("/company")
-def company():
-    return {
-        "project_root": str(PROJECT_ROOT),
-        "knowledge_dir": str(KNOWLEDGE_DIR),
-        "company_file": str(COMPANY_FILE),
-        "exists": COMPANY_FILE.exists(),
-        "content": COMPANY_FILE.read_text(encoding="utf-8") if COMPANY_FILE.exists() else None,
+        "message": "RAVAND OS is running 🚀",
+        "docs": "/docs",
+        "health": "/health"
     }

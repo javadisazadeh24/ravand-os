@@ -1,18 +1,12 @@
-from pydantic_settings import BaseSettings
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
-class Settings(BaseSettings):
-    APP_NAME: str = "Ravand OS"
-    APP_VERSION: str = "1.0.0"
-
-    DEBUG: bool = True
-    DATABASE_URL: str = "sqlite:///./test.db"
-
-    API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = "change-this-in-production"
-
-    class Config:
-        env_file = ".env"
+class Settings:
+    OPENROUTER_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+    OPENROUTER_MODEL = "claude-haiku-4-5"
 
 
 settings = Settings()
