@@ -164,8 +164,8 @@ class AIService:
         self,
         messages: list[dict[str, str]],
         model: str | None = None,
-        temperature: float = 0.3,
-        max_tokens: int = 256,
+        temperature: float = 0.2,
+        max_tokens: int = 512,
         system_prompt: str | None = None,
     ) -> dict[str, Any]:
         """
