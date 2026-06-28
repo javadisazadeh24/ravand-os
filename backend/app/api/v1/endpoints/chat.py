@@ -34,6 +34,7 @@ from app.services.ai_service import (
     OllamaConnectionError,
     OllamaModelError,
     OllamaTimeoutError,
+    OllamaResponseError,
     get_ai_service,
 )
 from app.services.knowledge_service import KnowledgeService, get_knowledge_service
@@ -69,6 +70,9 @@ def chat(
     Handles session management, history retrieval, AI inference, and persistence.
     """
     target_model = request.model or settings.OLLAMA_MODEL
+    
+    logger.info("📥 Chat request received | session=%s | model=%s", 
+                request.session_id or "NEW", target_model)
 
     # ── 1. Resolve or create session ───────────────────────────────────────────
     if request.session_id:
@@ -80,6 +84,7 @@ def chat(
                        "Omit session_id to start a new conversation.",
             )
         is_new_session = False
+        logger.info("📂 Existing session: %s", request.session_id)
     else:
         chat_session = session_service.create_session(
             db=db,
@@ -87,6 +92,7 @@ def chat(
             title="New Chat",
         )
         is_new_session = True
+        logger.info("🆕 New session created: %s", chat_session.id)
 
     session_id = chat_session.id
 
@@ -97,6 +103,7 @@ def chat(
         role="user",
         content=request.message,
     )
+    logger.debug("💾 User message saved | session=%s", session_id)
 
     # ── 3. Build conversation history ──────────────────────────────────────────
     history = session_service.get_conversation_history(
@@ -104,11 +111,16 @@ def chat(
         session_id=session_id,
         limit=40,
     )
+    logger.debug("📜 History loaded | messages=%d", len(history))
 
     # ── 4. Build system prompt ─────────────────────────────────────────────────
     system_prompt = request.system_prompt or knowledge_service.get_system_prompt()
+    logger.debug("🔧 System prompt length: %d chars", len(system_prompt))
 
     # ── 5. AI inference ────────────────────────────────────────────────────────
+    logger.info("🤖 Calling Ollama | model=%s | temperature=%.2f", 
+                target_model, request.temperature)
+    
     try:
         ai_result = ai_service.chat(
             messages=history,
@@ -117,8 +129,12 @@ def chat(
             max_tokens=request.max_tokens,
             system_prompt=system_prompt,
         )
+        logger.info("✅ Ollama response received | tokens=%d | duration=%dms",
+                   ai_result.get("total_tokens", 0),
+                   ai_result.get("duration_ms", 0))
+        
     except OllamaConnectionError as exc:
-        logger.error("Ollama unreachable during chat | session=%s | %s", session_id, exc)
+        logger.error("❌ Ollama unreachable | session=%s | %s", session_id, exc)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=(
@@ -127,7 +143,7 @@ def chat(
             ),
         ) from exc
     except OllamaModelError as exc:
-        logger.error("Ollama model error | model=%s | %s", target_model, exc)
+        logger.error("❌ Ollama model error | model=%s | %s", target_model, exc)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=(
@@ -136,13 +152,25 @@ def chat(
             ),
         ) from exc
     except OllamaTimeoutError as exc:
-        logger.error("Ollama timeout | session=%s | %s", session_id, exc)
+        logger.error("❌ Ollama timeout | session=%s | %s", session_id, exc)
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail=(
                 "The AI model took too long to respond. "
                 "Try a shorter message or increase OLLAMA_TIMEOUT in .env."
             ),
+        ) from exc
+    except OllamaResponseError as exc:
+        logger.error("❌ Ollama response error | session=%s | %s", session_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Ollama returned an error: {str(exc)}",
+        ) from exc
+    except Exception as exc:
+        logger.error("❌ Unexpected error | session=%s | %s", session_id, exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(exc)}",
         ) from exc
 
     # ── 6. Persist assistant response ──────────────────────────────────────────
@@ -156,14 +184,16 @@ def chat(
         completion_tokens=ai_result.get("completion_tokens"),
         duration_ms=ai_result.get("duration_ms"),
     )
+    logger.debug("💾 Assistant response saved | message_id=%s", assistant_msg.id)
 
     # ── 7. Auto-title new sessions after first exchange ────────────────────────
     if is_new_session:
         title = request.message[:80].strip().replace("\n", " ")
         session_service.update_session_title(db=db, session_id=session_id, title=title)
+        logger.info("📝 Session titled: %s", title)
 
     logger.info(
-        "Chat complete | session=%s | model=%s | tokens=%d | duration=%dms",
+        "✨ Chat complete | session=%s | model=%s | tokens=%d | duration=%dms",
         session_id,
         ai_result["model"],
         ai_result.get("total_tokens", 0),

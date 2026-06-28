@@ -21,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.endpoints.health import router as health_router
+from app.api.v1.endpoints.voice import router as voice_router
 from app.api.v1.router import api_v1_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
@@ -216,7 +217,7 @@ async def generic_exception_handler(
 
 app.include_router(health_router)
 app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
-
+app.include_router(voice_router, prefix="/api/v1")
 
 # ── Root ───────────────────────────────────────────────────────────────────────
 
@@ -236,5 +237,6 @@ async def root() -> dict[str, Any]:
             "models": f"{settings.API_V1_PREFIX}/models",
             "agent": f"{settings.API_V1_PREFIX}/agent",
             "memory": f"{settings.API_V1_PREFIX}/memory",
+            "voice": "/api/v1/voice/run",
         },
     }

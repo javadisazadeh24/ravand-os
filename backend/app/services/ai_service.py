@@ -79,12 +79,12 @@ class AIService:
         """
         session = requests.Session()
         retry_strategy = Retry(
-            total=self._settings.OLLAMA_MAX_RETRIES,
-            backoff_factor=self._settings.OLLAMA_RETRY_DELAY,
-            status_forcelist=[502, 503, 504],
-            allowed_methods=["GET"],   # POST retries handled manually below
-            raise_on_status=False,
-        )
+        total=self._settings.OLLAMA_MAX_RETRIES,
+        backoff_factor=self._settings.OLLAMA_RETRY_DELAY,
+        status_forcelist=[502, 503, 504],
+        allowed_methods={"GET", "POST"},
+        raise_on_status=False,
+)
         adapter = HTTPAdapter(max_retries=retry_strategy)
         session.mount("http://", adapter)
         session.mount("https://", adapter)
@@ -164,8 +164,8 @@ class AIService:
         self,
         messages: list[dict[str, str]],
         model: str | None = None,
-        temperature: float = 0.7,
-        max_tokens: int = 2048,
+        temperature: float = 0.3,
+        max_tokens: int = 256,
         system_prompt: str | None = None,
     ) -> dict[str, Any]:
         """
@@ -217,7 +217,13 @@ class AIService:
         duration_ms = int((time.perf_counter() - start) * 1000)
 
         data = response.json()
+        
+        # ✅ FIX: Ollama /api/chat returns content in message.content
+        # Fallback to /api/generate format (response key) if message.content is empty
         content = data.get("message", {}).get("content", "")
+        if not content:
+            content = data.get("response", "")
+        
         usage = data.get("usage", {})
 
         # Ollama reports token counts in 'eval_count' and 'prompt_eval_count'
@@ -284,7 +290,10 @@ class AIService:
         duration_ms = int((time.perf_counter() - start) * 1000)
 
         data = response.json()
+        
+        # ✅ /api/generate uses "response" key directly
         content = data.get("response", "")
+        
         prompt_tokens = data.get("prompt_eval_count", 0)
         completion_tokens = data.get("eval_count", 0)
 

@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     # ── Ollama AI Engine ───────────────────────────────────────────────────────
     OLLAMA_HOST: str = "http://127.0.0.1:11434"
     OLLAMA_MODEL: str = "gpt-oss:20b"
-    OLLAMA_TIMEOUT: int = 120          # seconds – long inference can take time
+    OLLAMA_TIMEOUT: int = 180          # seconds – increased for heavy models
     OLLAMA_MAX_RETRIES: int = 3
     OLLAMA_RETRY_DELAY: float = 1.5    # seconds between retries
     OLLAMA_STREAM: bool = False
@@ -78,6 +78,7 @@ class Settings(BaseSettings):
             raise ValueError("OLLAMA_HOST must start with http:// or https://")
         return v.rstrip("/")
 
+    # ── Computed Ollama API URLs (Properties - Recommended) ────────────────────
     @property
     def ollama_api_generate(self) -> str:
         """Full URL for Ollama generate endpoint."""
@@ -97,6 +98,17 @@ class Settings(BaseSettings):
     def ollama_api_tags(self) -> str:
         """Full URL to list available models."""
         return f"{self.OLLAMA_HOST}/api/tags"
+    
+    # ── Computed Ollama API URLs (Direct Attributes - Alternative) ────────────
+    @property
+    def OLLAMA_CHAT_URL(self) -> str:
+        """Direct URL for Ollama chat endpoint (alternative accessor)."""
+        return f"{self.OLLAMA_HOST}/api/chat"
+    
+    @property
+    def OLLAMA_GENERATE_URL(self) -> str:
+        """Direct URL for Ollama generate endpoint (alternative accessor)."""
+        return f"{self.OLLAMA_HOST}/api/generate"
 
 
 @lru_cache(maxsize=1)
