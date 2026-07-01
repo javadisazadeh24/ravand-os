@@ -1,94 +1,65 @@
+"""
+RAVAND OS — FastAPI application entry point.
+
+Run with:
+    python -m uvicorn app.main:app --reload
+
+Knowledge files are loaded from:
+    ravand-os/knowledge/
+"""
+
 from pathlib import Path
-
 from fastapi import FastAPI
-
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 
-print("=" * 60)
-print("THIS IS THE NEW MAIN.PY")
-print("=" * 60)
+# ── Paths ─────────────────────────────────────────────────────────────────────
+# __file__ = ravand-os/backend/app/main.py
+# .parent        → ravand-os/backend/app
+# .parent.parent → ravand-os/backend
+# .parent.parent.parent → ravand-os  ✅
 
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+KNOWLEDGE_DIR = BASE_DIR / "knowledge"
+COMPANY_FILE = KNOWLEDGE_DIR / "company.md"
 
-# ==========================
-# FastAPI
-# ==========================
+# ── Settings ──────────────────────────────────────────────────────────────────
+APP_NAME = getattr(settings, "APP_NAME", "Ravand OS")
+APP_VERSION = getattr(settings, "APP_VERSION", "0.1.0")
 
+# ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.APP_VERSION,
+    title=APP_NAME,
+    version=APP_VERSION,
     description="AI-powered Business Operating System — MVP backend",
 )
 
-# ==========================
-# Paths
-# ==========================
-
-# پروژه:
-# ravand-os/
-# ├── backend/
-# │   └── app/
-# │       └── main.py
-# └── knowledge/
-#
-# از main.py باید دو پوشه برویم بالا تا ravand-os
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
-KNOWLEDGE_DIR = PROJECT_ROOT / "knowledge"
-
-COMPANY_FILE = KNOWLEDGE_DIR / "company.md"
-
-print("=" * 60)
-print("PROJECT_ROOT :", PROJECT_ROOT)
-print("KNOWLEDGE_DIR:", KNOWLEDGE_DIR)
-print("COMPANY_FILE :", COMPANY_FILE)
-print("FILE EXISTS  :", COMPANY_FILE.exists())
-print("=" * 60)
-
-# ==========================
-# Routers
-# ==========================
-
+# ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(api_v1_router, prefix="/api/v1")
 
-# ==========================
-# Root
-# ==========================
-
-@app.get("/")
+# ── Root endpoints ────────────────────────────────────────────────────────────
+@app.get("/", tags=["Health"])
 def root():
     return {
-        "app": settings.APP_NAME,
-        "version": settings.APP_VERSION,
+        "project": "RAVAND OS",
         "status": "running",
     }
 
-# ==========================
-# Health
-# ==========================
 
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 def health():
     return {
-        "status": "ok"
+        "status": "ok",
     }
 
-# ==========================
-# Company
-# ==========================
 
-@app.get("/company")
+@app.get("/company", tags=["Knowledge"])
 def company():
-
-    if not COMPANY_FILE.exists():
+    if COMPANY_FILE.exists():
         return {
-            "error": "company.md not found",
-            "searched_path": str(COMPANY_FILE),
-            "project_root": str(PROJECT_ROOT),
+            "content": COMPANY_FILE.read_text(encoding="utf-8")
         }
-
     return {
-        "path": str(COMPANY_FILE),
-        "content": COMPANY_FILE.read_text(encoding="utf-8")
+        "error": "company.md not found",
+        "looked_at": str(COMPANY_FILE),
     }
