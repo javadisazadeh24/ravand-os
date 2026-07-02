@@ -15,7 +15,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 
 import { useLayoutStore } from "@/store/useLayoutStore";
-import { useOSCommand } from "@/lib/useOSCommand";
+import { useCommandRouter } from "@/hooks/useCommandRouter";
 
 export default function Header() {
     const isSidebarCollapsed = useLayoutStore(
@@ -25,13 +25,20 @@ export default function Header() {
     const toggleMobileSidebar = useLayoutStore(
         (state) => state.toggleMobileSidebar,
     );
-    const { execute } = useOSCommand();
-    const [command, setCommand] = useState("");
-    const DesktopToggleIcon = isSidebarCollapsed ? ChevronRight : ChevronLeft;
 
-    const submitCommand = () => {
+    const { execute } = useCommandRouter();
+
+    const [command, setCommand] = useState("");
+
+    const DesktopToggleIcon = isSidebarCollapsed
+        ? ChevronRight
+        : ChevronLeft;
+
+    const submitCommand = async () => {
         if (!command.trim()) return;
-        execute(command);
+
+        await execute(command);
+
         setCommand("");
     };
 
@@ -42,64 +49,64 @@ export default function Header() {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.28, ease: "easeOut" }}
         >
+            {/* Mobile Sidebar */}
             <button
                 type="button"
-                aria-label="Open navigation"
-                className="grid size-10 place-items-center rounded-[var(--ravand-radius-sm)] border border-white/10 bg-white/[0.04] text-[var(--ravand-muted)] transition hover:border-white/20 hover:text-[var(--ravand-text)] lg:hidden"
+                className="grid size-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-white/60 lg:hidden"
                 onClick={toggleMobileSidebar}
             >
-                <Menu size={19} />
+                <Menu size={18} />
             </button>
 
+            {/* Desktop Sidebar Toggle */}
             <button
                 type="button"
-                aria-label={
-                    isSidebarCollapsed
-                        ? "Expand navigation"
-                        : "Collapse navigation"
-                }
-                className="hidden size-10 place-items-center rounded-[var(--ravand-radius-sm)] border border-white/10 bg-white/[0.04] text-[var(--ravand-muted)] transition hover:border-white/20 hover:text-[var(--ravand-text)] lg:grid"
+                className="hidden size-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-white/60 lg:grid"
                 onClick={toggleSidebar}
             >
-                <DesktopToggleIcon size={19} />
+                <DesktopToggleIcon size={18} />
             </button>
 
-            <div className="hidden min-w-0 flex-1 sm:block">
-                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-[var(--ravand-muted)]">
-                    <Sparkles size={14} className="text-[var(--ravand-primary)]" />
+            {/* Title */}
+            <div className="hidden flex-1 sm:block">
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-white/40">
+                    <Sparkles size={13} className="text-indigo-400" />
                     Workspace
                 </div>
-                <h1 className="truncate text-sm font-semibold text-[var(--ravand-text)] sm:text-base">
+                <h1 className="text-sm font-semibold text-white">
                     RAVAND OS Control Surface
                 </h1>
             </div>
 
-            <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.065] px-3 text-sm text-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:max-w-xl">
-                <Command size={16} className="shrink-0" />
+            {/* Command Input */}
+            <div className="flex flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                <Command size={16} className="text-white/40" />
+
                 <input
                     value={command}
-                    onChange={(event) => setCommand(event.target.value)}
-                    onKeyDown={(event) => {
-                        if (event.key === "Enter") submitCommand();
+                    onChange={(e) => setCommand(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") submitCommand();
                     }}
                     placeholder="Command Ravand..."
-                    className="min-w-0 flex-1 bg-transparent text-white outline-none placeholder:text-white/35"
+                    className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30"
                 />
-                <kbd className="hidden rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-white/35 md:block">
+
+                <kbd className="hidden rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-white/40 md:block">
                     Enter
                 </kbd>
             </div>
 
+            {/* Right Actions */}
             <div className="flex items-center gap-2">
-                {[Plus, Bell, Settings, UserRound].map((Icon, index) => (
+                {[Plus, Bell, Settings, UserRound].map((Icon, i) => (
                     <motion.button
-                        key={index}
-                        type="button"
-                        className="grid size-10 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-white/55 transition hover:text-white"
-                        whileHover={{ y: -2, scale: 1.03 }}
-                        whileTap={{ scale: 0.96 }}
+                        key={i}
+                        className="grid size-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                     >
-                        <Icon size={17} />
+                        <Icon size={16} />
                     </motion.button>
                 ))}
             </div>
