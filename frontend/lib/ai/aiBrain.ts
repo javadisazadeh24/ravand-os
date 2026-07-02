@@ -4,12 +4,12 @@ import { useMemoryStore } from "@/store/useMemoryStore";
 import { runAgent } from "../agent/agent";
 
 /**
- * RAVAND OS — AI Brain v2.0
- * Features:
- * - Plugin system
- * - Command parsing
+ * 🧠 RAVAND OS — AI Brain v2 (FINAL)
+ * - Plugin layer
+ * - Command system
  * - Memory awareness
- * - Autonomous agent execution
+ * - Agent execution
+ * - Structured OS output
  */
 
 export type AIIntent =
@@ -24,8 +24,8 @@ export type AIDecision = {
   intent: AIIntent;
   confidence: number;
 
-  target?: string;
   response?: string;
+  target?: string;
 
   meta?: {
     source: "plugin" | "rules" | "memory" | "agent" | "fallback";
@@ -33,10 +33,14 @@ export type AIDecision = {
   };
 };
 
-/**
- * Save memory helper
- */
-function saveMemory(content: string, type: "command" | "navigation" | "note") {
+/* -----------------------------
+   MEMORY SYSTEM
+------------------------------ */
+
+function saveMemory(
+  content: string,
+  type: "command" | "navigation" | "note"
+) {
   const store = useMemoryStore.getState();
 
   store.addMemory({
@@ -47,9 +51,6 @@ function saveMemory(content: string, type: "command" | "navigation" | "note") {
   });
 }
 
-/**
- * Get recent context for reasoning
- */
 function getMemoryContext(limit = 5) {
   const store = useMemoryStore.getState();
 
@@ -59,17 +60,18 @@ function getMemoryContext(limit = 5) {
     .join(" | ");
 }
 
-/**
- * MAIN AI BRAIN
- */
+/* -----------------------------
+   MAIN AI BRAIN
+------------------------------ */
+
 export async function aiBrain(input: string): Promise<AIDecision> {
   const normalized = input.trim().toLowerCase();
-
   const memoryContext = getMemoryContext();
 
-  /**
-   * 1. PLUGIN LAYER (highest priority)
-   */
+  /* -------------------------
+     1. PLUGIN LAYER (HIGHEST PRIORITY)
+  -------------------------- */
+
   const pluginResult = runPlugins(normalized);
 
   if (pluginResult) {
@@ -86,9 +88,10 @@ export async function aiBrain(input: string): Promise<AIDecision> {
     };
   }
 
-  /**
-   * 2. COMMAND PARSER
-   */
+  /* -------------------------
+     2. COMMAND PARSER
+  -------------------------- */
+
   const command = parseCommand(normalized);
 
   // NAVIGATION
@@ -113,7 +116,8 @@ export async function aiBrain(input: string): Promise<AIDecision> {
     return {
       intent: "action",
       confidence: 0.9,
-      response: command.message || "Action executed in OS layer.",
+      response:
+        command.message || "Action executed in OS layer.",
       meta: {
         source: "rules",
         rawInput: input,
@@ -121,9 +125,10 @@ export async function aiBrain(input: string): Promise<AIDecision> {
     };
   }
 
-  /**
-   * 3. AGENT MODE (AUTONOMOUS SYSTEM)
-   */
+  /* -------------------------
+     3. AGENT MODE (AUTONOMOUS EXECUTION)
+  -------------------------- */
+
   if (
     normalized.includes("agent") ||
     normalized.includes("auto") ||
@@ -145,9 +150,10 @@ export async function aiBrain(input: string): Promise<AIDecision> {
     };
   }
 
-  /**
-   * 4. QUERY DETECTION
-   */
+  /* -------------------------
+     4. QUESTION DETECTION
+  -------------------------- */
+
   const isQuestion =
     normalized.includes("?") ||
     normalized.startsWith("what") ||
@@ -161,9 +167,9 @@ export async function aiBrain(input: string): Promise<AIDecision> {
 
     return {
       intent: "query",
-      confidence: 0.65,
+      confidence: 0.7,
       response:
-        "Query detected. No external AI model active yet. System uses plugins, memory, and agent logic.",
+        "Query detected. AI Brain is running in rules + memory + plugin mode (no LLM yet).",
       meta: {
         source: "rules",
         rawInput: input,
@@ -171,17 +177,24 @@ export async function aiBrain(input: string): Promise<AIDecision> {
     };
   }
 
-  /**
-   * 5. KEYWORD NAVIGATION
-   */
-  if (normalized.includes("open") || normalized.includes("go to")) {
-    const target = normalized.replace("open", "").replace("go to", "").trim();
+  /* -------------------------
+     5. SIMPLE NAVIGATION KEYWORDS
+  -------------------------- */
+
+  if (
+    normalized.includes("open") ||
+    normalized.includes("go to")
+  ) {
+    const target = normalized
+      .replace("open", "")
+      .replace("go to", "")
+      .trim();
 
     saveMemory(input, "navigation");
 
     return {
       intent: "navigation",
-      confidence: 0.6,
+      confidence: 0.65,
       target: `/${target}`,
       meta: {
         source: "rules",
@@ -190,14 +203,15 @@ export async function aiBrain(input: string): Promise<AIDecision> {
     };
   }
 
-  /**
-   * 6. FALLBACK WITH MEMORY CONTEXT
-   */
+  /* -------------------------
+     6. FALLBACK (MEMORY-AWARE)
+  -------------------------- */
+
   saveMemory(input, "note");
 
   return {
     intent: "unknown",
-    confidence: 0.35,
+    confidence: 0.4,
     response: memoryContext
       ? `Command not recognized.\n\nMemory context:\n${memoryContext}`
       : "Command not recognized by AI Brain.",
