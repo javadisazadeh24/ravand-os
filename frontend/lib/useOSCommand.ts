@@ -1,27 +1,43 @@
 import { useRouter } from "next/navigation";
 import { parseCommand } from "./commandEngine";
+import { aiBrain } from "./ai/aiBrain";
+import { useOSStore } from "@/store/useOSStore";
 
 export function useOSCommand() {
   const router = useRouter();
 
+  const { setActiveRoute, pushCommand } = useOSStore();
+
   const execute = (input: string) => {
-    const command = parseCommand(input);
+    const decision = aiBrain(input);
+
+    pushCommand({
+      input,
+      timestamp: Date.now(),
+      type: decision.intent as any,
+    });
 
     // NAVIGATION
-    if (command.type === "navigation" && command.target) {
-      router.push(command.target);
-      return command;
+    if (decision.intent === "navigation" && decision.target) {
+      router.push(decision.target);
+      setActiveRoute(decision.target);
+      return decision;
     }
 
     // ACTION
-    if (command.type === "action") {
+    if (decision.intent === "action") {
       return {
-        ...command,
+        ...decision,
         executed: true,
       };
     }
 
-    return command;
+    // QUERY (offline response)
+    if (decision.intent === "query") {
+      return decision;
+    }
+
+    return decision;
   };
 
   return { execute };
