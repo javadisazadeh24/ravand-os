@@ -1,10 +1,15 @@
 import { parseCommand } from "../commandEngine";
 import { runPlugins } from "./plugins";
 import { useMemoryStore } from "@/store/useMemoryStore";
+import { runAgent } from "../agent/agent";
 
 /**
- * RAVAND OS — AI Brain Core (v1.5)
- * Offline-first + Memory-aware + Plugin-driven
+ * RAVAND OS — AI Brain v2.0
+ * Features:
+ * - Plugin system
+ * - Command parsing
+ * - Memory awareness
+ * - Autonomous agent execution
  */
 
 export type AIIntent =
@@ -12,6 +17,7 @@ export type AIIntent =
   | "action"
   | "query"
   | "plugin"
+  | "agent"
   | "unknown";
 
 export type AIDecision = {
@@ -22,21 +28,18 @@ export type AIDecision = {
   response?: string;
 
   meta?: {
-    source: "plugin" | "rules" | "memory" | "fallback";
+    source: "plugin" | "rules" | "memory" | "agent" | "fallback";
     rawInput: string;
   };
 };
 
 /**
- * MEMORY LOGGER
+ * Save memory helper
  */
-function saveMemory(
-  content: string,
-  type: "command" | "navigation" | "note"
-) {
-  const memoryStore = useMemoryStore.getState();
+function saveMemory(content: string, type: "command" | "navigation" | "note") {
+  const store = useMemoryStore.getState();
 
-  memoryStore.addMemory({
+  store.addMemory({
     id: crypto.randomUUID(),
     content,
     type,
@@ -45,12 +48,12 @@ function saveMemory(
 }
 
 /**
- * MEMORY CONTEXT BUILDER
+ * Get recent context for reasoning
  */
 function getMemoryContext(limit = 5) {
-  const memoryStore = useMemoryStore.getState();
+  const store = useMemoryStore.getState();
 
-  return memoryStore.memories
+  return store.memories
     .slice(0, limit)
     .map((m) => `[${m.type}] ${m.content}`)
     .join(" | ");
@@ -59,7 +62,7 @@ function getMemoryContext(limit = 5) {
 /**
  * MAIN AI BRAIN
  */
-export function aiBrain(input: string): AIDecision {
+export async function aiBrain(input: string): Promise<AIDecision> {
   const normalized = input.trim().toLowerCase();
 
   const memoryContext = getMemoryContext();
@@ -84,7 +87,7 @@ export function aiBrain(input: string): AIDecision {
   }
 
   /**
-   * 2. COMMAND PARSER LAYER
+   * 2. COMMAND PARSER
    */
   const command = parseCommand(normalized);
 
@@ -119,7 +122,31 @@ export function aiBrain(input: string): AIDecision {
   }
 
   /**
-   * 3. QUERY DETECTION (light NLP rules)
+   * 3. AGENT MODE (AUTONOMOUS SYSTEM)
+   */
+  if (
+    normalized.includes("agent") ||
+    normalized.includes("auto") ||
+    normalized.includes("run task") ||
+    normalized.includes("execute plan")
+  ) {
+    saveMemory(input, "command");
+
+    const result = await runAgent(input);
+
+    return {
+      intent: "agent",
+      confidence: 0.99,
+      response: JSON.stringify(result, null, 2),
+      meta: {
+        source: "agent",
+        rawInput: input,
+      },
+    };
+  }
+
+  /**
+   * 4. QUERY DETECTION
    */
   const isQuestion =
     normalized.includes("?") ||
@@ -136,7 +163,7 @@ export function aiBrain(input: string): AIDecision {
       intent: "query",
       confidence: 0.65,
       response:
-        "Query detected. No external model is active yet. OS memory + plugins available.",
+        "Query detected. No external AI model active yet. System uses plugins, memory, and agent logic.",
       meta: {
         source: "rules",
         rawInput: input,
@@ -145,13 +172,10 @@ export function aiBrain(input: string): AIDecision {
   }
 
   /**
-   * 4. KEYWORD NAVIGATION DETECTION
+   * 5. KEYWORD NAVIGATION
    */
   if (normalized.includes("open") || normalized.includes("go to")) {
-    const target = normalized
-      .replace("open", "")
-      .replace("go to", "")
-      .trim();
+    const target = normalized.replace("open", "").replace("go to", "").trim();
 
     saveMemory(input, "navigation");
 
@@ -167,7 +191,7 @@ export function aiBrain(input: string): AIDecision {
   }
 
   /**
-   * 5. MEMORY-AWARE FALLBACK
+   * 6. FALLBACK WITH MEMORY CONTEXT
    */
   saveMemory(input, "note");
 
@@ -175,7 +199,7 @@ export function aiBrain(input: string): AIDecision {
     intent: "unknown",
     confidence: 0.35,
     response: memoryContext
-      ? `Command not recognized.\n\nRecent context:\n${memoryContext}`
+      ? `Command not recognized.\n\nMemory context:\n${memoryContext}`
       : "Command not recognized by AI Brain.",
     meta: {
       source: "memory",
