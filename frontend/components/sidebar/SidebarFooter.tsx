@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Gauge } from "lucide-react";
+import { Gauge, UserRound } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -18,8 +18,9 @@ export default function SidebarFooter({ isCollapsed }: SidebarFooterProps) {
                     isCollapsed && "justify-center px-2",
                 )}
             >
-                <div className="grid size-9 shrink-0 place-items-center rounded-[var(--ravand-radius-sm)] bg-[rgba(34,197,94,0.12)] text-[var(--ravand-success)]">
-                    <Gauge size={18} />
+                <div className="relative grid size-9 shrink-0 place-items-center rounded-[var(--ravand-radius-sm)] bg-white/10 text-white">
+                    <UserRound size={18} />
+                    <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border border-[#111] bg-[var(--ravand-success)]" />
                 </div>
 
                 <AnimatePresence initial={false}>
@@ -32,10 +33,11 @@ export default function SidebarFooter({ isCollapsed }: SidebarFooterProps) {
                             transition={{ duration: 0.16 }}
                         >
                             <p className="truncate text-xs font-semibold text-[var(--ravand-text)]">
-                                UI Framework
+                                J. Isazadeh
                             </p>
                             <p className="truncate text-xs text-[var(--ravand-muted)]">
-                                Shell ready
+                                <Gauge size={12} className="mr-1 inline" />
+                                Operator online
                             </p>
                         </motion.div>
                     ) : null}

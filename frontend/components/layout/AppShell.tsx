@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import Sidebar from "@/components/sidebar/Sidebar";
+import Dock from "@/components/os/Dock";
 import { useLayoutStore } from "@/store/useLayoutStore";
 import { useOSStore } from "@/store/useOSStore";
 import { theme } from "@/styles/theme";
@@ -121,6 +122,7 @@ export default function AppShell({ children }: AppShellProps) {
           <StatusBar />
         </motion.div>
       </div>
+      <Dock />
     </div>
   );
 }

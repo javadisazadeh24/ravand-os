@@ -1,4 +1,4 @@
-import { AgentPlan } from "./types";
+import { AgentPlan, type AgentStep } from "./types";
 
 /**
  * Simple rule-based task decomposition engine
@@ -6,7 +6,7 @@ import { AgentPlan } from "./types";
 export function decomposeTask(input: string): AgentPlan {
   const normalized = input.toLowerCase();
 
-  const steps = [];
+  const steps: AgentStep[] = [];
 
   // NAVIGATION TASK
   if (normalized.includes("open") || normalized.includes("go to")) {

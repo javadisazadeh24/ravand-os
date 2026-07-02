@@ -2,6 +2,12 @@ import { createPlan } from "./planner";
 import { runTool } from "../tools/toolRouter";
 import { eventBus } from "../core/eventBus";
 
+type AgentExecutionResult = {
+  step: string;
+  result?: unknown;
+  error?: string;
+};
+
 /**
  * 🧠 RAVAND OS — Event-driven Agent Executor
  */
@@ -16,7 +22,7 @@ export async function runAgent(input: string) {
     plan,
   });
 
-  const results: any[] = [];
+  const results: AgentExecutionResult[] = [];
 
   for (const step of plan.steps) {
     try {
@@ -27,15 +33,15 @@ export async function runAgent(input: string) {
         status: "running",
       });
 
-      let result: any = null;
+      let result: unknown = null;
 
       // -------------------------
       // TOOL ROUTING
       // -------------------------
 
-      if (step.tool === "router") {
+      if ("tool" in step && step.tool === "router") {
         result = {
-          message: `Routing to: ${step.input}`,
+          message: `Routing to: ${"input" in step ? step.input : step.action}`,
         };
       }
 

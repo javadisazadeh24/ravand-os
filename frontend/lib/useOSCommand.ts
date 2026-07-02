@@ -1,5 +1,4 @@
 import { useRouter } from "next/navigation";
-import { parseCommand } from "./commandEngine";
 import { aiBrain } from "./ai/aiBrain";
 import { useOSStore } from "@/store/useOSStore";
 
@@ -8,13 +7,16 @@ export function useOSCommand() {
 
   const { setActiveRoute, pushCommand } = useOSStore();
 
-  const execute = (input: string) => {
-    const decision = aiBrain(input);
+  const execute = async (input: string) => {
+    const decision = await aiBrain(input);
 
     pushCommand({
       input,
       timestamp: Date.now(),
-      type: decision.intent as any,
+      type:
+        decision.intent === "navigation" || decision.intent === "action"
+          ? decision.intent
+          : "unknown",
     });
 
     // NAVIGATION

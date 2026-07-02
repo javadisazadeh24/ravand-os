@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Cpu, X } from "lucide-react";
+import { ChevronsUpDown, Cpu, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useLayoutStore } from "@/store/useLayoutStore";
@@ -40,11 +40,14 @@ export default function SidebarHeader({
                             exit={{ opacity: 0, x: -8 }}
                             transition={{ duration: 0.18 }}
                         >
-                            <p className="truncate text-sm font-bold">
-                                RAVAND OS
-                            </p>
+                            <div className="flex items-center gap-1.5">
+                                <p className="truncate text-sm font-bold">
+                                    Ravand Prime
+                                </p>
+                                <ChevronsUpDown size={13} className="text-white/40" />
+                            </div>
                             <p className="truncate text-xs text-[var(--ravand-muted)]">
-                                AI Operating System
+                                Personal AI workspace
                             </p>
                         </motion.div>
                     ) : null}

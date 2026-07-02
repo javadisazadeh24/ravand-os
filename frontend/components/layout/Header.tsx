@@ -1,9 +1,21 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Menu, Sparkles } from "lucide-react";
+import {
+    Bell,
+    ChevronLeft,
+    ChevronRight,
+    Command,
+    Menu,
+    Plus,
+    Settings,
+    Sparkles,
+    UserRound,
+} from "lucide-react";
 import { motion } from "framer-motion";
+import { useState } from "react";
 
 import { useLayoutStore } from "@/store/useLayoutStore";
+import { useOSCommand } from "@/lib/useOSCommand";
 
 export default function Header() {
     const isSidebarCollapsed = useLayoutStore(
@@ -13,7 +25,15 @@ export default function Header() {
     const toggleMobileSidebar = useLayoutStore(
         (state) => state.toggleMobileSidebar,
     );
+    const { execute } = useOSCommand();
+    const [command, setCommand] = useState("");
     const DesktopToggleIcon = isSidebarCollapsed ? ChevronRight : ChevronLeft;
+
+    const submitCommand = () => {
+        if (!command.trim()) return;
+        execute(command);
+        setCommand("");
+    };
 
     return (
         <motion.header
@@ -44,7 +64,7 @@ export default function Header() {
                 <DesktopToggleIcon size={19} />
             </button>
 
-            <div className="min-w-0 flex-1">
+            <div className="hidden min-w-0 flex-1 sm:block">
                 <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-[var(--ravand-muted)]">
                     <Sparkles size={14} className="text-[var(--ravand-primary)]" />
                     Workspace
@@ -54,9 +74,34 @@ export default function Header() {
                 </h1>
             </div>
 
-            <div className="hidden items-center gap-2 rounded-[var(--ravand-radius-md)] border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-[var(--ravand-muted)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:flex">
-                <span className="size-2 rounded-full bg-[var(--ravand-success)] shadow-[0_0_16px_rgba(34,197,94,0.55)]" />
-                <span className="truncate">Ready</span>
+            <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.065] px-3 text-sm text-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:max-w-xl">
+                <Command size={16} className="shrink-0" />
+                <input
+                    value={command}
+                    onChange={(event) => setCommand(event.target.value)}
+                    onKeyDown={(event) => {
+                        if (event.key === "Enter") submitCommand();
+                    }}
+                    placeholder="Command Ravand..."
+                    className="min-w-0 flex-1 bg-transparent text-white outline-none placeholder:text-white/35"
+                />
+                <kbd className="hidden rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-white/35 md:block">
+                    Enter
+                </kbd>
+            </div>
+
+            <div className="flex items-center gap-2">
+                {[Plus, Bell, Settings, UserRound].map((Icon, index) => (
+                    <motion.button
+                        key={index}
+                        type="button"
+                        className="grid size-10 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-white/55 transition hover:text-white"
+                        whileHover={{ y: -2, scale: 1.03 }}
+                        whileTap={{ scale: 0.96 }}
+                    >
+                        <Icon size={17} />
+                    </motion.button>
+                ))}
             </div>
         </motion.header>
     );
