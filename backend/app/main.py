@@ -14,7 +14,7 @@ Or via the helper script:
 import time
 from contextlib import asynccontextmanager
 from typing import Any
-
+from app.api.v1.endpoints.system import router as system_router
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -218,7 +218,7 @@ async def generic_exception_handler(
 app.include_router(health_router)
 app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
 app.include_router(voice_router, prefix="/api/v1")
-
+app.include_router(system_router, prefix="/api/v1")
 # ── Root ───────────────────────────────────────────────────────────────────────
 
 @app.get("/", include_in_schema=False)
