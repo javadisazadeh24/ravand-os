@@ -1,23 +1,30 @@
 import { create } from "zustand";
-import { AppDefinition } from "@/types/app";
+import { appRegistry, RavandApp } from "@/lib/apps/appRegistry";
 
 type AppStore = {
-  apps: AppDefinition[];
+  registerApp: (app: RavandApp) => void;
 
-  registerApp: (app: AppDefinition) => void;
+  unregisterApp: (id: string) => void;
 
-  getApp: (id: string) => AppDefinition | undefined;
+  getApp: (id: string) => RavandApp | undefined;
+
+  getApps: () => RavandApp[];
 };
 
-export const useAppStore = create<AppStore>((set, get) => ({
-  apps: [],
+export const useAppStore = create<AppStore>(() => ({
+  registerApp(app) {
+    appRegistry.register(app);
+  },
 
-  registerApp: (app) =>
-    set((state) => ({
-      apps: [...state.apps, app],
-    })),
+  unregisterApp(id) {
+    appRegistry.unregister(id);
+  },
 
-  getApp: (id) => {
-    return get().apps.find((a) => a.id === id);
+  getApp(id) {
+    return appRegistry.get(id);
+  },
+
+  getApps() {
+    return appRegistry.getAll();
   },
 }));

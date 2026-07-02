@@ -1,71 +1,107 @@
-import { useAppStore } from "@/store/useAppStore";
+import { appRegistry } from "@/lib/apps/appRegistry";
+
+// ⚠️ مهم: این‌ها باید REAL components باشند
+import ChatPage from "@/app/chat/page";
+import DashboardPage from "@/app/page";
+import AgentsPage from "@/app/agents/page";
+import MemoryPage from "@/app/memory/page";
+import PluginsPage from "@/app/plugins/page";
+import SettingsPage from "@/app/settings/page";
 
 export function registerDefaultApps() {
-  const store = useAppStore.getState();
-
-  store.registerApp({
+  // -------------------------
+  // CHAT APP
+  // -------------------------
+  appRegistry.register({
     id: "chat",
     title: "Chat",
     icon: "💬",
     route: "/chat",
+    component: ChatPage,
     defaultWidth: 900,
     defaultHeight: 650,
-    multiple: true,
-    showInDock: true,
+    resizable: true,
+    minimizable: true,
+    maximizable: true,
   });
 
-  store.registerApp({
+  // -------------------------
+  // DASHBOARD
+  // -------------------------
+  appRegistry.register({
     id: "dashboard",
     title: "Dashboard",
     icon: "📊",
     route: "/",
+    component: DashboardPage,
     defaultWidth: 1100,
     defaultHeight: 700,
-    multiple: false,
-    showInDock: true,
+    resizable: true,
+    minimizable: true,
+    maximizable: true,
   });
 
-  store.registerApp({
+  // -------------------------
+  // AGENTS
+  // -------------------------
+  appRegistry.register({
     id: "agents",
     title: "Agents",
     icon: "🤖",
     route: "/agents",
-    defaultWidth: 900,
-    defaultHeight: 600,
-    multiple: true,
-    showInDock: true,
+    component: AgentsPage,
+    defaultWidth: 950,
+    defaultHeight: 650,
+    resizable: true,
+    minimizable: true,
+    maximizable: true,
   });
 
-  store.registerApp({
+  // -------------------------
+  // MEMORY
+  // -------------------------
+  appRegistry.register({
     id: "memory",
     title: "Memory",
     icon: "🧠",
     route: "/memory",
-    defaultWidth: 800,
+    component: MemoryPage,
+    defaultWidth: 850,
     defaultHeight: 600,
-    multiple: false,
-    showInDock: true,
+    resizable: true,
+    minimizable: true,
+    maximizable: true,
   });
 
-  store.registerApp({
+  // -------------------------
+  // PLUGINS
+  // -------------------------
+  appRegistry.register({
     id: "plugins",
     title: "Plugins",
     icon: "🧩",
     route: "/plugins",
+    component: PluginsPage,
     defaultWidth: 900,
     defaultHeight: 600,
-    multiple: false,
-    showInDock: true,
+    resizable: true,
+    minimizable: true,
+    maximizable: true,
   });
 
-  store.registerApp({
+  // -------------------------
+  // SETTINGS
+  // -------------------------
+  appRegistry.register({
     id: "settings",
     title: "Settings",
     icon: "⚙️",
     route: "/settings",
+    component: SettingsPage,
     defaultWidth: 800,
     defaultHeight: 600,
-    multiple: false,
-    showInDock: true,
+    resizable: true,
+    minimizable: true,
+    maximizable: true,
   });
 }
